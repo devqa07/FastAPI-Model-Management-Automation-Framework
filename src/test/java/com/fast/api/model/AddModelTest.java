@@ -1,4 +1,9 @@
-package com.fast.api.test;
+/*
+ * Author: Devendra Singh
+ * Date: 24/08/24
+ */
+
+package com.fast.api.model;
 
 import com.aventstack.extentreports.Status;
 import com.fast.api.core.base.ApiTestBase;

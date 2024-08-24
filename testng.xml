@@ -3,7 +3,7 @@
 <suite name="FastAPITestSuite">
 	<test name="AutomationTestSuite">
 		<packages>
-			<package name="com.fast.api.test.*" />
+			<package name="com.fast.api.model.*" />
 		</packages>
 	</test>
 </suite>

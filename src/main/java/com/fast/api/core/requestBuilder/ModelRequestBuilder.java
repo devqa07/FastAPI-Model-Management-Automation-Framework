@@ -1,3 +1,8 @@
+/*
+ * Author: Devendra Singh
+ * Date: 24/08/24
+ */
+
 package com.fast.api.core.requestBuilder;
 
 import com.fast.api.core.base.ApiTestBase;
@@ -19,15 +24,9 @@ public class ModelRequestBuilder extends ApiTestBase {
         return modelVersion;
     }
 
-    public JSONObject performInferenceBody(String text, boolean applyTemplate,int maxNewTokens,boolean doSample,float temperature,int topK,float topP) {
+    public JSONObject performInferenceBody(String text) {
         JSONObject inference = new JSONObject();
         inference.put("text", text);
-        inference.put("apply_template", applyTemplate);
-        inference.put("max_new_tokens", maxNewTokens);
-        inference.put("do_sample", doSample);
-        inference.put("temperature", temperature);
-        inference.put("top_k", topK);
-        inference.put("top_p", topP);
         return inference;
     }
 }

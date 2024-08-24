@@ -1,3 +1,6 @@
 owner,Dev
-hugging_face_model,TinyLlama
+hugging_face_model,TinyLlama/TinyLlama-1.1B-Chat-v1.0
 modelId,6a724aca-b21d-45a4-8c82-2ebab6af5a84476
+versionId,ef9de420-fc6c-4695-9e81-f1cff6531ca923
+text,Hi how are you?
+expectedText,Hi how are you?
