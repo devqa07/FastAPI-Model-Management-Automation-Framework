@@ -80,10 +80,10 @@ Test Execution Reports(open Fast-API-AutomationReport.html in a browser to see t
 
 ******CI/CD Pipeline Structure and Details:****** <br>
 
-This project uses GitHub Actions to automate the Continuous Integration/Continuous Deployment (CI/CD) pipeline.
+This project uses GitHub Actions and Docker container to automate the Continuous Integration/Continuous Deployment (CI/CD) pipeline.
 Below is an overview of the pipeline structure and the steps involved. Job is configured in **.github/workflows/ci-cd.yml** as follows:
 
-![img_8.png](img_8.png)<br>
+![img_12.png](img_12.png) <br>
 
 ****Pipeline Trigger Conditions:**** <br>
 
@@ -94,7 +94,8 @@ The pipeline is triggered under the following conditions:
 
 **Jobs and Steps Details**
 
-The pipeline is defined under the jobs section, where we specify the build job that runs on the ubuntu-latest virtual environment provided by GitHub.
+The pipeline is defined under the jobs section, where we specify the build job that runs on the ubuntu-latest virtual environment provided by GitHub 
+and tests will run under Docker container 
 
 **1.** **Checkout Code**
 
@@ -128,26 +129,26 @@ The pipeline is defined under the jobs section, where we specify the build job t
       Action: The actions/cache@v3 action is used to cache the .m2 directory, where Maven stores downloaded dependencies.<br>
      
 
-**4.** **Create test-output Directory**
+**4. Create test-output Directory**
 
     name: Create test-output directory
     run: mkdir -p test-output
-     - Purpose: This step creates a directory named test-output where test results will be stored.
-     - Action: The mkdir -p test-output command ensures that the directory is created before the tests run.
+     Purpose: This step creates a directory named test-output where test results will be stored.
+     Action: The mkdir -p test-output command ensures that the directory is created before the tests run.
      
 **5. Build and Test with Maven**
 
     name: Build and Test with Maven
-    - run: mvn clean install
-    - Purpose: Compiles the code, runs the tests, and packages the application.
-    - Action: The mvn clean install command cleans the target directory, compiles the code, runs all tests, and packages the project as defined in the pom.xml file. <br>
+    run: mvn clean install
+    Purpose: Compiles the code, runs the tests, and packages the application.
+    Action: The mvn clean install command cleans the target directory, compiles the code, runs all tests, and packages the project as defined in the pom.xml file. <br>
 
 **6. List test-output Directory Contents**
 
         name: List test-output directory contents
         run: ls -R test-output/
-        - Purpose: This optional step lists the contents of the test-output directory to verify that the test results have been generated correctly.
-        - Action: The ls -R test-output/ command recursively lists the contents of the test-output directory.<br>
+        Purpose: This optional step lists the contents of the test-output directory to verify that the test results have been generated correctly.
+        ction: The ls -R test-output/ command recursively lists the contents of the test-output directory.<br>
 
 **7. Upload Test Results**
    
@@ -157,10 +158,62 @@ The pipeline is defined under the jobs section, where we specify the build job t
            with:
            name: test-results
            path: test-output/
-           •	Purpose: Uploads the test results as an artifact that can be reviewed later.
-           •	Action: The actions/upload-artifact@v3 action uploads the contents of the test-output/ directory as a named artifact (test-results). The if: always() condition ensures this step runs even if previous steps fail, providing access to test results for debugging purposes.<br>
+           Purpose: Uploads the test results as an artifact that can be reviewed later.
+           Action: The actions/upload-artifact@v3 action uploads the contents of the test-output/ directory as a named artifact (test-results). The if: always() condition ensures this step runs even if previous steps fail, providing access to test results for debugging purposes.<br>
 
-**8. Viewing GitHub action activity** 
+**8. Login to Docker Hub**
+
+        name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+        Purpose: Authenticates with Docker Hub to pull Docker images.
+        Action: Uses Docker login credentials stored in GitHub secrets to log in to Docker Hub.
+
+**9. Pull Docker Image**
+
+    name: Pull Docker image
+    run: docker pull devdockr18/recruiting-qa-challenge-qa-server:latest
+    Purpose: Retrieves the latest version of the Docker image required for the pipeline.
+    Action: Pulls the Docker image devdockr18/recruiting-qa-challenge-qa-server:latest from Docker Hub.
+
+**10. Install Docker Compose**
+
+    name: Install Docker Compose
+    run: sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose
+    Purpose: Installs Docker Compose to manage multi-container Docker applications.
+    Action: Downloads and installs Docker Compose from the official GitHub repository.
+
+**11. Run Docker Compose Services**
+
+    name: Run Docker Compose services
+    run: docker-compose up -d
+    Purpose: Starts the Docker Compose services in detached mode.
+    Action: Runs docker-compose up -d to start all services defined in the docker-compose.yml file.
+
+
+**12. Wait for the Server to Be Ready**
+
+    name: Wait for the server to be ready
+    run: sleep 30
+    Purpose: Ensures that the server is fully initialized and ready to handle requests before running tests.
+    Action: Introduces a delay of 30 seconds.
+
+**13. Run Tests Inside Docker Container**
+
+    name: Run tests inside Docker container
+    run: |
+    CONTAINER_NAME=$(docker ps -qf "name=app")
+    docker exec -it $CONTAINER_NAME python /app/application.py
+    Purpose: Executes the tests within the Docker container to ensure the application works as expected.
+    Action: Identifies the running container and executes the test script application.py
+
+**14. Stop Docker Compose Services**
+
+    name: Stop Docker Compose services
+    run: docker-compose down
+    Purpose: Stops and removes Docker Compose services.
+    Action: Runs docker-compose down to clean up the environment after the tests are complete.
+
+**15. Viewing GitHub action activity** 
 
 Once the GitHub actions are configured and start running, we can view each step’s activity on GitHub.
 
@@ -180,24 +233,21 @@ Test Report/execution html report for a specific run can be downloaded from the 
 
 **Advantages:**
 
-1. Consistency & Reliability: Ensures tests are run in a controlled environment, providing consistent and reliable feedback on API health.
+1. **Consistency & Reliability:** Ensures tests are run in a controlled environment, providing consistent and reliable feedback on API health.
+2. **CI/CD Integration:** Enables automatic testing and deployment on every code push or pull request, accelerating the development process.
+3. **Comprehensive Test Coverage:** Supports various test types (integration and regression testing) to minimize bugs and regressions.
+4. **Scalability:** Easily extendable with new test cases and integration with additional tools as the project grows.
+5. **Version Control:** Tracks changes in both the automation framework and GitHub Actions workflows, ensuring stability and traceability.
+6. **Cost-Efficiency:** Utilizes GitHub Actions' managed environment, reducing the need for separate CI/CD infrastructure and lowering operational costs.
+7. **Isolated Testing Environment:** Docker provides a consistent and isolated environment for testing, improving reliability and accuracy.
 
-2. CI/CD Integration: Enables automatic testing and deployment on every code push or pull request, accelerating the development process.
-
-3. Comprehensive Test Coverage: Supports various test types (integration and regression testing) to minimize bugs and regressions.
-
-4. Scalability: Easily extendable with new test cases and integration with additional tools as the project grows.
-
-5. Version Control: Tracks changes in both the automation framework and GitHub Actions workflows, ensuring stability and traceability.
-
-6. Cost-Efficiency: Utilizes GitHub Actions' managed environment, reducing the need for separate CI/CD infrastructure and lowering operational costs.
 
 **Drawbacks:** <br>
 
-1. Learning Curve: It requires familiarity with GitHub Actions, Docker, and CI/CD practices, which may be challenging for team members new to these tools.
-2. Increased Complexity: It adds layers of complexity in managing the framework, Docker containers, and CI/CD pipelines, which may require more maintenance.
-3. Debugging Challenges: Debugging issues within the CI/CD pipeline or Docker containers can be more difficult compared to running tests directly on a local machine.
-4. Resource Consumption: Running extensive tests in parallel or within Docker containers can be resource-intensive, potentially impacting performance, especially on limited hardware.
+1. **Learning Curve:** It requires familiarity with GitHub Actions, Docker, and CI/CD practices, which may be challenging for team members new to these tools.
+2. **Increased Complexity:** It adds layers of complexity in managing the framework, Docker containers, and CI/CD pipelines, which may require more maintenance.
+3. **Debugging Challenges:** Debugging issues within the CI/CD pipeline or Docker containers can be more difficult compared to running tests directly on a local machine.
+4. **Resource Consumption:** Running extensive tests in parallel or within Docker containers can be resource-intensive, potentially impacting performance, especially on limited hardware.
 
 
 
