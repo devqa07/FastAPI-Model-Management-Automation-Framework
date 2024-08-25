@@ -7,4 +7,4 @@ services:
       - "8000:8000"
     environment:
       - ENV_VARIABLE=dev
-    command: ["py", "-c", "sleep 10 && ./application.py"]
+    entrypoint: ["python", "/app/application.py"]
