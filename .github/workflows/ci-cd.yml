@@ -48,9 +48,6 @@ jobs:
       - name: Run tests inside Docker container
         run: docker-compose exec -T app ./run-tests.sh
 
-      - name: Stop Docker Compose services
-        run: docker-compose down
-
       - name: Create test-output directory
         run: mkdir -p test-output
 
@@ -66,3 +63,6 @@ jobs:
         with:
           name: test-results
           path: test-output/
+
+      - name: Stop Docker Compose services
+        run: docker-compose down
