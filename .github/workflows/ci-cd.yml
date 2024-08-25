@@ -42,7 +42,7 @@ jobs:
           sleep 30  # Wait for the server to start
 
       - name: Run tests inside Docker container
-        run: docker exec test-container ./run-tests.sh
+        run: docker exec test-container ./application.py
 
       - name: Create test-output directory
         run: mkdir -p test-output
